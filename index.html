@@ -1,0 +1,312 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FitAI — AI-Powered Personal Fitness & Nutrition Coach</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<!-- AUTH SCREEN (shown until logged in) -->
+<div id="auth-screen" class="auth-wrap">
+  <div class="auth-card">
+    <div class="mark">FitAI</div>
+    <p class="tag" style="margin-bottom:22px;">Sign in to your coach</p>
+    <div class="auth-tabs">
+      <button type="button" id="auth-tab-login" class="tab-btn active">Log in</button>
+      <button type="button" id="auth-tab-signup" class="tab-btn">Sign up</button>
+    </div>
+    <form id="login-form">
+      <div class="field-row"><label for="login-name">Name</label><input type="text" id="login-name" required></div>
+      <div class="field-row"><label for="login-password">Password</label><input type="password" id="login-password" required></div>
+      <button type="submit" class="btn-accent" style="width:100%;">Log in</button>
+    </form>
+    <form id="signup-form" class="hidden">
+      <div class="field-row"><label for="signup-name">Name</label><input type="text" id="signup-name" required></div>
+      <div class="field-row"><label for="signup-password">Password</label><input type="password" id="signup-password" required minlength="4"></div>
+      <div class="field-row"><label for="signup-password-confirm">Confirm password</label><input type="password" id="signup-password-confirm" required minlength="4"></div>
+      <button type="submit" class="btn-accent" style="width:100%;">Create account</button>
+    </form>
+    <p id="auth-error" class="auth-error"></p>
+  </div>
+</div>
+
+<!-- APP SHELL (shown after login) -->
+<div id="app-shell" class="hidden">
+
+<header class="topbar">
+  <div class="wrap topbar-inner">
+    <span class="mark">FitAI</span>
+    <nav class="tabs" id="main-nav">
+      <button class="tab-btn" data-view="dashboard">Dashboard</button>
+      <button class="tab-btn" data-view="plan">Plan</button>
+      <button class="tab-btn" data-view="chat">Coach</button>
+      <button class="tab-btn" data-view="workouts">Workouts</button>
+      <button class="tab-btn" data-view="nutrition">Nutrition</button>
+      <button class="tab-btn" data-view="weight">Weight</button>
+      <button class="tab-btn" data-view="goals">Goals</button>
+      <button class="tab-btn" data-view="reminders">Reminders</button>
+      <button class="tab-btn" data-view="profile">Profile</button>
+    </nav>
+    <div class="account-info">
+      <span id="current-user-label"></span>
+      <button type="button" id="btn-logout" class="small-btn">Log out</button>
+    </div>
+  </div>
+</header>
+
+<div id="toast-stack" class="toast-stack" aria-live="polite"></div>
+
+<main class="wrap">
+
+  <!-- DASHBOARD -->
+  <section class="view" id="view-dashboard">
+    <h1 class="view-title">Dashboard</h1>
+    <div id="dashboard-empty" class="empty-state hidden">
+      <p>Set up your profile to unlock your dashboard.</p>
+      <button class="btn-accent" data-goto="profile">Go to Profile</button>
+    </div>
+    <div id="dashboard-content" class="hidden">
+      <div class="stat-grid" id="stat-grid"></div>
+      <div class="chart-row">
+        <div class="card">
+          <h3>Weight trend</h3>
+          <canvas id="chart-weight" height="180"></canvas>
+        </div>
+        <div class="card">
+          <h3>Workouts this week</h3>
+          <canvas id="chart-workouts" height="180"></canvas>
+        </div>
+      </div>
+      <div class="card" id="badge-card">
+        <h3>Achievements</h3>
+        <div id="badge-list" class="badge-list"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- PLAN -->
+  <section class="view" id="view-plan">
+    <h1 class="view-title">Your Plan</h1>
+    <div id="plan-empty" class="empty-state hidden">
+      <p>Complete your profile first — your plan is built from your stats and goal.</p>
+      <button class="btn-accent" data-goto="profile">Go to Profile</button>
+    </div>
+    <div id="plan-content" class="hidden">
+      <div class="plan-actions">
+        <button class="btn-accent" id="btn-generate-plan">Regenerate plan</button>
+        <button class="btn-outline" id="btn-adapt-plan">Adapt plan to my progress</button>
+      </div>
+      <p class="hint" id="adapt-hint"></p>
+      <div id="plan-body"><p class="placeholder">No plan yet. Click "Regenerate plan" to create one.</p></div>
+    </div>
+  </section>
+
+  <!-- CHAT -->
+  <section class="view" id="view-chat">
+    <h1 class="view-title">AI Coach</h1>
+    <div id="chat-empty" class="empty-state hidden">
+      <p>Set up your profile so the coach knows your stats and goal.</p>
+      <button class="btn-accent" data-goto="profile">Go to Profile</button>
+    </div>
+    <div id="chat-content" class="hidden">
+      <div class="card chat-card">
+        <div id="chat-messages" class="chat-messages"></div>
+        <form id="chat-form" class="chat-form">
+          <input type="text" id="chat-input" placeholder="Ask about your plan, form, nutrition…" autocomplete="off" required>
+          <button type="submit" id="chat-send">Send</button>
+        </form>
+      </div>
+    </div>
+  </section>
+
+  <!-- WORKOUTS -->
+  <section class="view" id="view-workouts">
+    <h1 class="view-title">Workouts</h1>
+    <div id="workouts-empty" class="empty-state hidden">
+      <p>Generate a plan first, then log your workouts here.</p>
+      <button class="btn-accent" data-goto="plan">Go to Plan</button>
+    </div>
+    <div id="workouts-content" class="hidden">
+      <div class="card" id="today-workout-card"></div>
+      <div class="card">
+        <h3>History</h3>
+        <div id="workout-history" class="log-list"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- NUTRITION -->
+  <section class="view" id="view-nutrition">
+    <h1 class="view-title">Nutrition</h1>
+    <div id="nutrition-empty" class="empty-state hidden">
+      <p>Generate a plan first to get your daily calorie and macro targets.</p>
+      <button class="btn-accent" data-goto="plan">Go to Plan</button>
+    </div>
+    <div id="nutrition-content" class="hidden">
+      <div class="card" id="nutrition-targets-card"></div>
+      <div class="card">
+        <h3>Log food</h3>
+        <form id="food-form" class="inline-form">
+          <input type="text" id="food-input" placeholder="e.g. grilled chicken breast with rice and broccoli" required>
+          <button type="submit" id="food-submit">Estimate & add</button>
+        </form>
+        <p class="hint">The AI estimates calories and macros from your description.</p>
+        <div id="food-log" class="log-list"></div>
+      </div>
+      <div class="card" id="meal-ideas-card"></div>
+    </div>
+  </section>
+
+  <!-- WEIGHT -->
+  <section class="view" id="view-weight">
+    <h1 class="view-title">Weight Tracker</h1>
+    <div class="card">
+      <form id="weight-form" class="inline-form">
+        <input type="date" id="weight-date" required>
+        <input type="number" id="weight-value" step="0.1" min="30" max="300" placeholder="Weight (kg)" required>
+        <button type="submit">Log weight</button>
+      </form>
+    </div>
+    <div class="card">
+      <canvas id="chart-weight-full" height="200"></canvas>
+    </div>
+    <div class="card">
+      <h3>History</h3>
+      <div id="weight-history" class="log-list"></div>
+    </div>
+  </section>
+
+  <!-- GOALS -->
+  <section class="view" id="view-goals">
+    <h1 class="view-title">Goals</h1>
+    <div class="card">
+      <form id="goal-form" class="inline-form">
+        <input type="text" id="goal-title" placeholder="e.g. Run 5k without stopping" required>
+        <input type="text" id="goal-target" placeholder="Target (optional, e.g. 5 km)">
+        <button type="submit">Add goal</button>
+      </form>
+    </div>
+    <div class="card">
+      <div id="goal-list" class="log-list"></div>
+    </div>
+  </section>
+
+  <!-- REMINDERS -->
+  <section class="view" id="view-reminders">
+    <h1 class="view-title">Reminders</h1>
+    <div class="card">
+      <form id="reminder-form" class="reminder-form">
+        <input type="text" id="reminder-text" placeholder="e.g. Log today's weight" required>
+        <input type="time" id="reminder-time" required>
+        <div class="weekday-picker" id="reminder-days">
+          <label><input type="checkbox" value="0">Sun</label>
+          <label><input type="checkbox" value="1">Mon</label>
+          <label><input type="checkbox" value="2">Tue</label>
+          <label><input type="checkbox" value="3">Wed</label>
+          <label><input type="checkbox" value="4">Thu</label>
+          <label><input type="checkbox" value="5">Fri</label>
+          <label><input type="checkbox" value="6">Sat</label>
+        </div>
+        <button type="submit">Add reminder</button>
+      </form>
+    </div>
+    <div class="card">
+      <h3>Today</h3>
+      <div id="reminders-today" class="log-list"></div>
+    </div>
+    <div class="card">
+      <h3>All reminders</h3>
+      <div id="reminders-all" class="log-list"></div>
+    </div>
+  </section>
+
+  <!-- PROFILE -->
+  <section class="view" id="view-profile">
+    <h1 class="view-title">Your Profile</h1>
+    <div class="card">
+      <form id="profile-form">
+        <div class="field-row two-up">
+          <div><label for="p-age">Age</label><input type="number" id="p-age" min="13" max="90" required></div>
+          <div><label for="p-sex">Sex</label>
+            <select id="p-sex" required>
+              <option value="" disabled selected>Select</option>
+              <option>Male</option><option>Female</option><option>Prefer not to say</option>
+            </select>
+          </div>
+        </div>
+        <div class="field-row two-up">
+          <div><label for="p-height">Height (cm)</label><input type="number" id="p-height" min="100" max="250" required></div>
+          <div><label for="p-weight">Current weight (kg)</label><input type="number" id="p-weight" step="0.1" min="30" max="300" required></div>
+        </div>
+        <div class="field-row">
+          <label for="p-target-weight">Target weight (kg) <span class="opt">(optional)</span></label>
+          <input type="number" id="p-target-weight" step="0.1" min="30" max="300">
+        </div>
+        <div class="field-row">
+          <label for="p-goal">Primary goal</label>
+          <select id="p-goal" required>
+            <option value="" disabled selected>Select</option>
+            <option>Lose fat</option><option>Build muscle</option>
+            <option>Improve endurance</option><option>General fitness / health</option>
+            <option>Get stronger (strength)</option>
+          </select>
+        </div>
+        <div class="field-row">
+          <label for="p-experience">Training experience</label>
+          <select id="p-experience" required>
+            <option value="" disabled selected>Select</option>
+            <option>Beginner</option><option>Intermediate</option><option>Advanced</option>
+          </select>
+        </div>
+        <div class="field-row two-up">
+          <div><label for="p-days">Days/week available</label>
+            <select id="p-days" required>
+              <option value="" disabled selected>Select</option>
+              <option>2</option><option>3</option><option>4</option><option>5</option><option>6</option>
+            </select>
+          </div>
+          <div><label for="p-equipment">Equipment access</label>
+            <select id="p-equipment" required>
+              <option value="" disabled selected>Select</option>
+              <option>Full gym</option><option>Home gym (dumbbells/bands)</option><option>Bodyweight only</option>
+            </select>
+          </div>
+        </div>
+        <div class="field-row">
+          <label for="p-diet">Dietary preference</label>
+          <select id="p-diet">
+            <option>No restrictions</option><option>Vegetarian</option><option>Vegan</option>
+            <option>Halal</option><option>Keto</option><option>Other</option>
+          </select>
+        </div>
+        <div class="field-row">
+          <label for="p-limitations">Injuries or limitations <span class="opt">(optional)</span></label>
+          <textarea id="p-limitations" rows="2"></textarea>
+        </div>
+        <button type="submit" class="btn-accent" id="profile-submit">Save profile & generate plan</button>
+      </form>
+    </div>
+  </section>
+
+</main>
+
+<footer class="wrap">
+  <p>FitAI · AD-ET 101 Final Project · Powered by the Gemini API</p>
+</footer>
+
+</div><!-- /#app-shell -->
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.4/chart.umd.min.js"></script>
+<script src="js/config.js"></script>
+<script src="js/storage.js"></script>
+<script src="js/gemini.js"></script>
+<script src="js/auth.js"></script>
+<script src="js/ui.js"></script>
+<script src="js/main.js"></script>
+</body>
+</html>
